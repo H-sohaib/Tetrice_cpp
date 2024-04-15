@@ -118,7 +118,7 @@ void GameObject::drawRhambus(SDL_Renderer *renderer, Color color, int w, int h, 
 
 void GameObject::render()
 {
-  switch (shape)
+  switch (this->shape)
   {
   case Shape::SQUARE:
     drawSquare(renderer, color, weight, height, x, y);
