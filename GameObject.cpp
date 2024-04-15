@@ -136,3 +136,17 @@ void GameObject::render()
     break;
   }
 }
+
+void GameObject::update_coordinates(int x, int y)
+{
+  if (static_cast<Shape>(shape) == Shape::SQUARE) // custom cordinnates
+  {
+    this->x = x - (SHAPES_SIZE / 2);
+    this->y = y - (SHAPES_SIZE / 2);
+  }
+  else // other shapes
+  {
+    this->x = x;
+    this->y = y;
+  }
+}
