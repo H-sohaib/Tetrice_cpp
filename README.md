@@ -1,5 +1,3 @@
-Certainly! Below is a simple example of a README file that explains how to set up and run a game on an Ubuntu system. This example assumes that the game has some dependencies, such as SDL2, and is compiled using a Makefile.
-
 ### README.md for Game
 
 ---
