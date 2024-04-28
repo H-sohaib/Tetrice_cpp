@@ -1,0 +1,5 @@
+		g++ -g main.cpp Game.cpp GameObject.cpp List.cpp -o main -lSDL2 -lSDL2_gfx -lSDL2_ttf
+		gdb ./main
+
+    g++ -g -o listmain ./listmain.cpp
+		./listmain

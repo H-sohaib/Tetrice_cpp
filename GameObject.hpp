@@ -6,17 +6,17 @@ const short int SHAPES_SIZE = 50;
 
 enum class Color
 {
-  BLUE,
-  YELLOW,
-  RED,
-  GREEN
+  BLUE,   // 0
+  YELLOW, // 1
+  RED,    // 2
+  GREEN   // 3
 };
 enum class Shape
 {
-  SQUARE,
-  RHAMBUS,
-  CIRCLE,
-  TRIANGLE
+  SQUARE,  // 0
+  RHAMBUS, // 1
+  CIRCLE,  // 2
+  TRIANGLE // 3
 };
 
 class GameObject

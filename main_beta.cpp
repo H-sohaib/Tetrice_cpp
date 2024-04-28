@@ -3,9 +3,9 @@
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <SDL2/SDL_ttf.h>
 #include <ctime>
-#include <cstdlib> // For rand() and srand()
 // #include <vector>
-#include "SimpleLinkedList.hpp"
+#include "DynamicArray.hpp"
+#include <cstdlib> // For rand() and srand()
 #include "GameObject.hpp"
 using namespace std;
 // * const ------------------------------------
@@ -28,36 +28,65 @@ enum class Response
   WIN,
   NONE
 };
+class Shape_Node
+{
+public:
+  size_t index;
+  GameObject *shape;
+  Shape_Node *next;
+  Shape_Node *prev;
+  Shape_Node()
+  {
+    index = 0;
+    shape = nullptr;
+    next = nullptr;
+  }
+
+  static size_t get_max_index(List<Shape_Node *> &list)
+  {
+    size_t max = 0;
+    for (Shape_Node *node : list)
+    {
+      if (node->index > max)
+      {
+        max = node->index;
+      }
+    }
+    return max;
+  }
+};
 
 // GameObject *next_piece;
-SimpleLinkedList pieces_list;
-SimpleLinkedList square_nodes;
-SimpleLinkedList circle_nodes;
-SimpleLinkedList triangle_nodes;
-SimpleLinkedList Rhambus_nodes;
-SimpleLinkedList blue_nodes;
-SimpleLinkedList yellow_nodes;
-SimpleLinkedList red_nodes;
-SimpleLinkedList green_nodes;
-SimpleLinkedList rand_pieces_list;
+List<Shape_Node *> pieces_list;
+
+List<Shape_Node *> square_nodes;
+List<Shape_Node *> circle_nodes;
+List<Shape_Node *> triangle_nodes;
+List<Shape_Node *> Rhambus_nodes;
+
+List<Shape_Node *> blue_nodes;
+List<Shape_Node *> yellow_nodes;
+List<Shape_Node *> red_nodes;
+List<Shape_Node *> green_nodes;
+
+List<Shape_Node *> rand_pieces_list;
 
 int game_init();
 void handel_events();
 void start_tetriste();
-void clear_tetriste();
-void setup_static_UI();
 GameObject *return_random_shape(int x, int y);
 void right_insert_piece2list();
 void left_insert_piece2list();
+void freeShapeNodeLists(List<Shape_Node *> &v);
 void update_pieces_coordinates();
 Response check_win();
 void winOrlose(const char *msg);
-// void distingush_shape_color(Node *node);
-// void left_rotate_by_shapes(Shape shape);
-// void erase_node_distangush_lists(Node *node);
-
-// void show_index(SimpleLinkedList<Node *> &v);
-// void freeShapeNodeLists(SimpleLinkedList<Node *> &v);
+void clear_tetriste();
+void setup_static_UI();
+void show_index(List<Shape_Node *> &v);
+void distingush_shape_color(Shape_Node *node);
+void left_rotate_by_shapes(Shape shape);
+void erase_node_distangush_lists(Shape_Node *node);
 
 int main()
 {
@@ -73,13 +102,13 @@ int main()
   {
     if (check_win() == Response::WIN)
     {
-      std::cout << "You Win" << endl;
+      cout << "You Win" << endl;
       winOrlose("You Win !!!");
       isRunning = false;
     }
     else if (check_win() == Response::LOSE)
     {
-      std::cout << "You Lose" << endl;
+      cout << "You Lose" << endl;
       winOrlose("You Lose !!!");
       isRunning = false;
     }
@@ -95,15 +124,12 @@ int main()
     }
     //* rander all piece in list
 
-    for (int i = 0; i < pieces_list.get_size(); i++)
+    for (Shape_Node *shapeNode : pieces_list)
     {
-      pieces_list.at(i)->piece->render();
+      shapeNode->shape->render();
     }
-    // {
-    //   shapeNode->shape->render();
-    // }
 
-    rand_pieces_list.back()->piece->render();
+    rand_pieces_list.back()->shape->render();
 
     SDL_RenderPresent(renderer);
 
@@ -119,27 +145,27 @@ void left_rotate_by_shapes(Shape shape)
   switch (shape)
   {
   case Shape::SQUARE:
-    if (!square_nodes.get_size() > 1)
+    if (!square_nodes.size() > 1)
     {
       return;
     }
 
     square_nodes.left_rotate();
     // adjast the pieces_list with new order of shapes in shapes list
-    for (size_t i = 0, j = 0; i < pieces_list.get_size(); i++)
+    for (size_t i = 0, j = 0; i < pieces_list.size(); i++)
     {
-      if (pieces_list.at(i)->piece->shape == shape)
+      if (pieces_list.at(i)->shape->shape == shape)
       {
-        cout << "-square.size : " << square_nodes.get_size() << endl;
-        for (size_t i = 0; i < square_nodes.get_size(); i++)
+        cout << "-square.size : " << square_nodes.size() << endl;
+        for (Shape_Node *node : square_nodes)
         {
-          cout << "square_nodes  " << square_nodes.at(i)->index << " :" << static_cast<int>(square_nodes.at(i)->piece->color) << endl;
+          cout << "square_nodes  " << node->index << " :" << static_cast<int>(node->shape->color) << endl;
         }
 
         cout << "i = " << i << " j = " << j << endl;
-        cout << "i_shape = " << static_cast<int>(pieces_list.at(i)->piece->shape) << " i_color = " << static_cast<int>(pieces_list.at(i)->piece->color) << endl;
-        cout << "j_shape = " << static_cast<int>(square_nodes.at(j)->piece->shape) << " j_color = " << static_cast<int>(square_nodes.at(j)->piece->color) << endl;
-        *(pieces_list.at(i)) = *(square_nodes.at(j));
+        cout << "i_shape = " << static_cast<int>(pieces_list.at(i)->shape->shape) << " i_color = " << static_cast<int>(pieces_list.at(i)->shape->color) << endl;
+        cout << "j_shape = " << static_cast<int>(square_nodes.at(j)->shape->shape) << " j_color = " << static_cast<int>(square_nodes.at(j)->shape->color) << endl;
+        pieces_list.at(i) = square_nodes.at(j);
         j++;
       }
     }
@@ -152,41 +178,41 @@ void left_rotate_by_shapes(Shape shape)
   // adjast the x corrdinate of the pieces_list
   // update_pieces_coordinates();
 }
-// void distingush_shape_color(Piece *node)
-// {
-//   // by shapes
-//   switch (node->shape->shape)
-//   {
-//   case Shape::SQUARE:
-//     square_nodes.push_back(node);
-//     break;
-//   case Shape::CIRCLE:
-//     circle_nodes.push_back(node);
-//     break;
-//   case Shape::TRIANGLE:
-//     triangle_nodes.push_back(node);
-//     break;
-//   case Shape::RHAMBUS:
-//     Rhambus_nodes.push_back(node);
-//     break;
-//   }
-//   // By color
-//   switch (node->shape->color)
-//   {
-//   case Color::BLUE:
-//     blue_nodes.push_back(node);
-//     break;
-//   case Color::YELLOW:
-//     yellow_nodes.push_back(node);
-//     break;
-//   case Color::RED:
-//     red_nodes.push_back(node);
-//     break;
-//   case Color::GREEN:
-//     green_nodes.push_back(node);
-//     break;
-//   }
-// }
+void distingush_shape_color(Shape_Node *node)
+{
+  // by shapes
+  switch (node->shape->shape)
+  {
+  case Shape::SQUARE:
+    square_nodes.push_back(node);
+    break;
+  case Shape::CIRCLE:
+    circle_nodes.push_back(node);
+    break;
+  case Shape::TRIANGLE:
+    triangle_nodes.push_back(node);
+    break;
+  case Shape::RHAMBUS:
+    Rhambus_nodes.push_back(node);
+    break;
+  }
+  // By color
+  switch (node->shape->color)
+  {
+  case Color::BLUE:
+    blue_nodes.push_back(node);
+    break;
+  case Color::YELLOW:
+    yellow_nodes.push_back(node);
+    break;
+  case Color::RED:
+    red_nodes.push_back(node);
+    break;
+  case Color::GREEN:
+    green_nodes.push_back(node);
+    break;
+  }
+}
 void setup_static_UI()
 {
   SDL_Rect NextPieceR = {padding, 30, 80, 80};
@@ -258,11 +284,11 @@ void winOrlose(const char *msg)
 }
 Response check_win()
 {
-  if (pieces_list.get_size() == 0)
+  if (pieces_list.size() == 0)
   {
     return Response::WIN;
   }
-  else if (pieces_list.get_size() > 14)
+  else if (pieces_list.size() > 14)
   {
     return Response::LOSE;
   }
@@ -270,141 +296,155 @@ Response check_win()
 }
 void update_pieces_coordinates()
 {
-  for (int i = 0; i < pieces_list.get_size(); i++)
+  for (int i = 0; i < pieces_list.size(); i++)
   {
-    pieces_list.at(i)->piece->update_coordinates(60 + i * 60, SHAPES_LINE_Y);
+    pieces_list.at(i)->shape->update_coordinates(60 + i * 60, SHAPES_LINE_Y);
   }
 }
-// Node *copyShapeNode(Node *OriginNode)
-GameObject *copyShapeNode(Node *OriginNode)
+Shape_Node *copyShapeNode(Shape_Node *OriginNode)
 {
-  Node *new_node = new Node;
-
+  Shape_Node *new_node = new Shape_Node;
   // * copy the shape node from ran list to new node pointer & insert it to pieces_list
-  new_node->piece = new GameObject(*(OriginNode->piece));
-  // return new_node;
-  return new GameObject(*(OriginNode->piece));
+  new_node->shape = new GameObject(*(OriginNode->shape));
+  new_node->next = nullptr;
+  new_node->prev = nullptr;
+  return new_node;
 }
-void insert2mainList(bool isRight)
+void right_insert_piece2list()
 {
-  // int PL_size = pieces_list.get_size();
-  // Node *new_node = copyShapeNode(rand_pieces_list.back());
-
-  // cout << "piece_List befor I : ";
-  // for (int i = 0; i < pieces_list.get_size(); i++)
-  // {
-  //   cout << static_cast<int>(pieces_list.at(i)->shape->color) << " , ";
-  // }
-
-  if (isRight)
-  {
-    pieces_list.push_back(copyShapeNode(rand_pieces_list.back()));
-  }
-  else
-  {
-    pieces_list.push_front(copyShapeNode(rand_pieces_list.back()));
-  }
-
-  // cout << "piece_List after I : ";
-  // for (int i = 0; i < pieces_list.get_size(); i++)
-  // {
-  //   cout << static_cast<int>(pieces_list.at(i)->shape->color) << " , ";
-  // }
-
+  int PL_size = pieces_list.size();
+  Shape_Node *next_rand_piece = new Shape_Node;
+  Shape_Node *new_node = copyShapeNode(rand_pieces_list.back());
+  //  link the node
+  pieces_list.back()->next = new_node; // link the last elem to the new added elem
+  new_node->prev = pieces_list.back();
+  new_node->index = Shape_Node::get_max_index(pieces_list) + 1;
+  pieces_list.push_back(new_node);
   // correct the x of piece_list items
   update_pieces_coordinates();
   // insert to the distingush lists
-  // distingush_shape_color(new_node);
-  // show_index(pieces_list);
+  distingush_shape_color(new_node);
+  show_index(pieces_list);
 
   // add the next rand piece
-  // Node *next_rand_piece = new Node;
-  // next_rand_piece->piece = return_random_shape(padding + 120, 70); // push new random piece 2 rand
-  // next_rand_piece->index = rand_pieces_list.get_size();
-  rand_pieces_list.push_back(return_random_shape(padding + 120, 70)); // push new random piece 2 randlist
+  next_rand_piece->shape = return_random_shape(padding + 120, 70); // push new random piece 2 rand
+  // next_rand_piece->index = rand_pieces_list.size();
+  rand_pieces_list.push_back(next_rand_piece); // push new random piece 2 randlist
 
   // remove the local pointers
-  // next_rand_piece = nullptr;
-  // new_node = nullptr;
+  next_rand_piece = nullptr;
+  new_node = nullptr;
 }
-// void erase_node_distangush_lists(Node *node)
-// {
-//   // By shapes
-//   switch (node->shape->shape)
-//   {
-//   case Shape::SQUARE:
-//     square_nodes.remove_element(node);
-//     break;
-//   case Shape::CIRCLE:
-//     circle_nodes.remove_element(node);
-//     break;
-//   case Shape::TRIANGLE:
-//     triangle_nodes.remove_element(node);
-//     break;
-//   case Shape::RHAMBUS:
-//     Rhambus_nodes.remove_element(node);
-//     break;
-//   }
-//   // By color
-//   switch (node->shape->color)
-//   {
-//   case Color::BLUE:
-//     blue_nodes.remove_element(node);
-//     break;
-//   case Color::YELLOW:
-//     yellow_nodes.remove_element(node);
-//     break;
-//   case Color::RED:
-//     red_nodes.remove_element(node);
-//     break;
-//   case Color::GREEN:
-//     green_nodes.remove_element(node);
-//     break;
-//   }
-// }
+void left_insert_piece2list()
+{
+  int PL_size = pieces_list.size();
+  Shape_Node *next_rand_piece = new Shape_Node;
+  Shape_Node *new_node = copyShapeNode(rand_pieces_list.back());
+
+  // link the node
+  pieces_list.front()->prev = new_node;
+  new_node->next = pieces_list.front();
+
+  new_node->index = Shape_Node::get_max_index(pieces_list) + 1;
+  // new_node->index = 0; // set index is the size of the list
+  // shift all index by 1
+  // for (Shape_Node *node : pieces_list)
+  // {
+  //   node->index++;
+  // }
+
+  pieces_list.push_front(new_node);
+  update_pieces_coordinates(); // correct the x corrdinate using the their order
+  // insert to the distingush lists
+  distingush_shape_color(new_node);
+  show_index(pieces_list);
+
+  // add the next rand piece
+  next_rand_piece->shape = return_random_shape(padding + 120, 70); // push new random piece 2 rand
+  rand_pieces_list.push_back(next_rand_piece);                     // push new random piece 2 rand
+
+  // remove the local pointers
+  next_rand_piece = nullptr;
+  new_node = nullptr;
+}
+void erase_node_distangush_lists(Shape_Node *node)
+{
+  // By shapes
+  switch (node->shape->shape)
+  {
+  case Shape::SQUARE:
+    square_nodes.remove_element(node);
+    break;
+  case Shape::CIRCLE:
+    circle_nodes.remove_element(node);
+    break;
+  case Shape::TRIANGLE:
+    triangle_nodes.remove_element(node);
+    break;
+  case Shape::RHAMBUS:
+    Rhambus_nodes.remove_element(node);
+    break;
+  }
+  // By color
+  switch (node->shape->color)
+  {
+  case Color::BLUE:
+    blue_nodes.remove_element(node);
+    break;
+  case Color::YELLOW:
+    yellow_nodes.remove_element(node);
+    break;
+  case Color::RED:
+    red_nodes.remove_element(node);
+    break;
+  case Color::GREEN:
+    green_nodes.remove_element(node);
+    break;
+  }
+}
 Response removeConsecutiveMatchingPieces()
 {
-  for (int i = 0; i < pieces_list.get_size() - 2;)
+  for (int i = 0; i < pieces_list.size() - 2;)
   {
-    if (pieces_list.get_size() < 3)
+    if (pieces_list.size() < 3)
     {
       return Response::NONE;
     }
     // Notice the condition and increment change
-    bool isSameShape = (pieces_list.at(i)->piece->shape == pieces_list.at(i + 1)->piece->shape) &&
-                       (pieces_list.at(i)->piece->shape == pieces_list.at(i + 2)->piece->shape);
-    bool isSameColor = (pieces_list.at(i)->piece->color == pieces_list.at(i + 1)->piece->color) &&
-                       (pieces_list.at(i)->piece->color == pieces_list.at(i + 2)->piece->color);
+    bool isSameShape = (pieces_list[i]->shape->shape == pieces_list[i + 1]->shape->shape) &&
+                       (pieces_list[i]->shape->shape == pieces_list[i + 2]->shape->shape);
+    bool isSameColor = (pieces_list[i]->shape->color == pieces_list[i + 1]->shape->color) &&
+                       (pieces_list[i]->shape->color == pieces_list[i + 2]->shape->color);
 
     if (isSameShape || isSameColor)
     {
-      // // erase node from distangush lists
-      // erase_node_distangush_lists(pieces_list[i]);
-      // erase_node_distangush_lists(pieces_list[i + 1]);
-      // erase_node_distangush_lists(pieces_list[i + 2]);
+      // erase node from distangush lists
+      erase_node_distangush_lists(pieces_list[i]);
+      erase_node_distangush_lists(pieces_list[i + 1]);
+      erase_node_distangush_lists(pieces_list[i + 2]);
 
       // Delete the GameObjects if dynamically allocated
-      // delete pieces_list[i]->shape;
-      // delete pieces_list[i + 1]->shape;
-      // delete pieces_list[i + 2]->shape;
-      // // Delete the Nodes
-      // delete pieces_list[i];
-      // delete pieces_list[i + 1];
-      // delete pieces_list[i + 2];
+      delete pieces_list[i]->shape;
+      delete pieces_list[i + 1]->shape;
+      delete pieces_list[i + 2]->shape;
+      // Delete the Shape_Nodes
+      delete pieces_list[i];
+      delete pieces_list[i + 1];
+      delete pieces_list[i + 2];
       // Erase elements: erase three consecutive elements starting from index i
-      pieces_list.remove_range(i, i + 2);
-      // pieces_list.remove_element(pieces_list.at(i));
-      // pieces_list.remove_element(pieces_list.at(i + 1));
-      // pieces_list.remove_element(pieces_list.at(i + 2));
-
-      // pieces_list.erase(pieces_list.begin() + i, pieces_list.begin() + i + 3);
+      pieces_list.erase(pieces_list.begin() + i, pieces_list.begin() + i + 3);
       // correct all indexs after erase
-      // for (int i = 0; i < pieces_list.get_size(); i++)
+      // for (int i = 0; i < pieces_list.size(); i++)
       // {
       //   pieces_list.at(i)->index = i;
       // }
 
       update_pieces_coordinates();
+
+      for (size_t i = 0; i < square_nodes.size(); i++)
+      {
+        cout << "square_nodes  " << square_nodes.at(i)->index << " :" << static_cast<int>(square_nodes.at(i)->shape->color) << endl;
+      }
 
       if (isSameColor)
         return Response::REMOVED_COLOR;
@@ -434,11 +474,11 @@ void handel_events()
       isRunning = false;
       break;
     case SDLK_RIGHT:
-      insert2mainList(true);
+      right_insert_piece2list();
       removeConsecutiveMatchingPieces();
       break;
     case SDLK_LEFT:
-      insert2mainList(false);
+      left_insert_piece2list();
       removeConsecutiveMatchingPieces();
       break;
 
@@ -453,17 +493,16 @@ void handel_events()
 }
 void start_tetriste()
 {
-  // Node *rand_piece = new Node; // create a new node
-  // rand_piece->piece = ;
-  pieces_list.push_back(return_random_shape(60, SHAPES_LINE_Y));
+  Shape_Node *rand_piece = new Shape_Node;
+  rand_piece->shape = return_random_shape(60, SHAPES_LINE_Y);
+  rand_piece->index = 0;
+  pieces_list.push_back(rand_piece);
+  distingush_shape_color(rand_piece);
 
-  // cout << "shapes : " << static_cast<int>(pieces_list.at(0)->piece->shape) << endl;
-  // distingush_shape_color(rand_piece);
-
-  // Node *rand = new Node;
-  // rand->piece = ;
-  rand_pieces_list.push_back(return_random_shape(padding + 120, 70));
-  // cout << "rand,shapes : " << static_cast<int>(rand_pieces_list.at(0)->piece->shape) << endl;
+  Shape_Node *rand = new Shape_Node;
+  rand->shape = return_random_shape(padding + 120, 70);
+  rand->index = 0;
+  rand_pieces_list.push_back(rand);
 }
 GameObject *return_random_shape(int x, int y)
 {
@@ -523,19 +562,19 @@ int game_init()
   isRunning = true;
   return 1;
 }
-// void freeShapeNodeLists(SimpleLinkedList<Node *> &v)
-// {
-//   for (size_t i = 0; i < v.get_size(); i++)
-//   {
-//     delete v.at(i)->shape;
-//     delete v.at(i);
-//   }
-//   v.clear();
-// }
+void freeShapeNodeLists(List<Shape_Node *> &v)
+{
+  for (Shape_Node *node : v)
+  {
+    delete node->shape;
+    delete node;
+  }
+  v.clear();
+}
 void clear_tetriste()
 {
-  // freeShapeNodeLists(pieces_list);
-  // freeShapeNodeLists(rand_pieces_list);
+  freeShapeNodeLists(pieces_list);
+  freeShapeNodeLists(rand_pieces_list);
   TTF_CloseFont(font);
   SDL_DestroyWindow(window);
   SDL_DestroyRenderer(renderer);
@@ -549,14 +588,11 @@ void clear_tetriste()
   SDL_Quit();
 }
 
-// void show_index(SimpleLinkedList<Node *> &v)
-// {
-//   for (size_t i = 0; i < v.get_size(); i++)
-//   {
-//     cout << v.at(i)->index << " ";
-//   }
-//   // {
-//   //   cout << node->index << " ";
-//   // }
-//   cout << endl;
-// }
+void show_index(List<Shape_Node *> &v)
+{
+  for (Shape_Node *node : v)
+  {
+    cout << node->index << " ";
+  }
+  cout << endl;
+}
