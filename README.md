@@ -26,11 +26,9 @@ This will install the C++ compiler, the make utility, and the SDL2 libraries nee
 Clone the game repository or download the source code to your local machine. If the game is hosted on a repository (e.g., GitHub), you can clone it using:
 
 ```bash
-git clone [URL_of_Game_Repository]
-cd [Game_Directory]
+git clone https://github.com/H-sohaib/Tetrice_cpp.git
+cd Tetrice_cpp
 ```
-
-Replace `[URL_of_Game_Repository]` with the actual URL of the game's repository and `[Game_Directory]` with the name of the directory that contains the game.
 
 ## Compilation
 
